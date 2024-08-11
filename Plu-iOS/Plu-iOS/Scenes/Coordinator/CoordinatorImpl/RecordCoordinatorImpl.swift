@@ -46,9 +46,8 @@ final class RecordCoordinatorImpl: RecordCoordinator {
 
 extension RecordCoordinatorImpl: SelectYearAndMonthNavigation {
     func confirmButtonTapped(input: FilterDate) {
-        self.navigationController?.dismiss(animated: true) {
-            self.yearAndMonthSubject.send(input)
-        }
+        self.yearAndMonthSubject.send(input)
+        self.navigationController?.dismiss(animated: true)
     }
 }
 
