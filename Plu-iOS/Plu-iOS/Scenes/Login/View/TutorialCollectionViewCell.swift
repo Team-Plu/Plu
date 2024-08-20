@@ -47,8 +47,7 @@ final class TutorialCollectionViewCell: UICollectionViewCell {
         screenshotImageView.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
             make.top.equalTo(tutorialLabel.snp.bottom).offset(50)
-            make.width.equalTo(214.seWidth)
-            make.height.equalTo(screenshotImageView.snp.width).multipliedBy(258/214)
+            make.width.equalTo(tutorialLabel.snp.width)
         }
     }
     

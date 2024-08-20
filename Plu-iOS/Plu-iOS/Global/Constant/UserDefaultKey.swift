@@ -7,6 +7,7 @@
 
 import Foundation
 
-enum UserDefaultKeys: String {
-    case isShownAlarmPopup = "isShownAlarmPopup"
+enum UserDefaultKeys {
+    static let isShownAlarmPopup = "POPUP"
+    static let token = "TOKEN"
 }
