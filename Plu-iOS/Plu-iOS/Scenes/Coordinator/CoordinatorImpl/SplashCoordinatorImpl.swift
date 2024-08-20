@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class SplashCoordinatorImpl {
+final class SplashCoordinatorImpl: SplashCoordinator {
 
     weak var navigationController: UINavigationController?
     
@@ -17,7 +17,8 @@ final class SplashCoordinatorImpl {
     
     func showSplashViewController() {
         let splashViewController = SplashViewController()
-        splashViewController.delegate = self
+        splashViewController.reactor = SplashReactor(splashUseCase: SplashUseCaseImpl(authReporitory: AuthRepositoryImpl(request: NetworkRequestImpl())))
+        splashViewController.reactor?.delegate = self
         self.navigationController?.pushViewController(splashViewController, animated: false)
     }
     

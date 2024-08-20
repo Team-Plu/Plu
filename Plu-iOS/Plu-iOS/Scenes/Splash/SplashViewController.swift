@@ -8,48 +8,56 @@
 
 import UIKit
 
+import Alamofire
 import SnapKit
+import ReactorKit
+import RxSwift
+import RxCocoa
 
-protocol SplashNavigation: AnyObject {
-    func goToLogin()
-    func goToMain()
-}
+final class SplashViewController: UIViewController, View {
 
-final class SplashViewController: UIViewController {
+    typealias Reactor = SplashReactor
+    var disposeBag = DisposeBag()
     
     private let eyeImageView = PLUImageView(nil)
     private let wordMarkView = PLUImageView(ImageLiterals.Splash.pluWordmarkLarge)
     
-
-    var delegate: SplashNavigation?
-
     public override func viewDidLoad() {
         super.viewDidLoad()
-        selectRandomElement()
         setHierarchy()
         setLayout()
-        requestNotificationPermission()
-        DispatchQueue.main.asyncAfter(wallDeadline: .now()+1) {
-            self.delegate?.goToLogin()
-        }
     }
     
-    func requestNotificationPermission(){
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert,.sound,.badge], completionHandler: { didAllow,Error in
-            if didAllow {
-                print("Push: 권한 허용")
-            } else {
-                print("Push: 권한 거부")
-            }
-        })
+    func bind(reactor: Reactor) {
+        bindAction(reactor: reactor)
+        bindState(reactor: reactor)
+    }
+    
+    private func bindAction(reactor: Reactor) {
+        Observable.just(())
+          .map { Reactor.Action.viewDidLoad }
+          .bind(to: reactor.action)
+          .disposed(by: disposeBag)
+        
+        Observable.just(())
+            .delay(.seconds(1), scheduler: MainScheduler.instance)
+            .map { Reactor.Action.animationFinished }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindState(reactor: Reactor) {
+        reactor.state.compactMap { $0.randomElement }
+            .withUnretained(self)
+            .subscribe(onNext: { owner, randomElement in
+                owner.view.backgroundColor = .designSystem(randomElement.color)
+                owner.eyeImageView.image = randomElement.eyeImage
+            })
+            .disposed(by: disposeBag)
     }
 }
 
 private extension SplashViewController {
-    func selectRandomElement() {
-        let randomElement = Elements.allCases.randomElement()!
-        setUI(from: randomElement)
-    }
     
     func setUI(from element: Elements) {
         self.view.backgroundColor = .designSystem(element.color)
@@ -76,3 +84,48 @@ private extension SplashViewController {
         }
     }
 }
+
+protocol UserDefaultsRepository {
+    func getToken() -> PluToken
+    func setToken(token: PluToken)
+    func removeToken()
+}
+
+final class UserDefaultsRepositoryImpl: UserDefaultsRepository {
+    
+    func getToken() -> PluToken {
+        guard let accessToken = self.get(forKey: .accessToken) as? String, let refreshToken = self.get(forKey: .refreshToken) as? String else {
+            return .init(accessToken: nil, refreshToken: nil)
+        }
+        return .init(accessToken: accessToken, refreshToken: refreshToken)
+    }
+    
+    func setToken(token: PluToken) {
+        self.set(to: token.accessToken, forKey: .accessToken)
+        self.set(to: token.refreshToken, forKey: .refreshToken)
+    }
+    
+    func removeToken() {
+        self.remove(forKey: .accessToken)
+        self.remove(forKey: .refreshToken)
+    }
+}
+
+extension UserDefaultsRepository {
+    
+    func set<T>(to: T, forKey: UserDefaultsKeyType) {
+        UserDefaults.standard.setValue(to, forKey: forKey.rawValue)
+        print("UserDefaultsManager: save \(forKey) complete")
+    }
+    
+    func get(forKey: UserDefaultsKeyType) -> Any? {
+        return UserDefaults.standard.object(forKey: forKey.rawValue)
+    }
+    
+    func remove(forKey: UserDefaultsKeyType) {
+        UserDefaults.standard.removeObject(forKey: forKey.rawValue)
+    }
+}
+
+
+
