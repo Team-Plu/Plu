@@ -14,7 +14,7 @@ enum NetworkError: Error, Equatable {
     case badCasting
     case fetchImageError
     case unAuthorizedError
-    case clientError(code: String, message: String)
+    case clientError(code: String?, message: String?)
     case serverError
     case kakaoError
 }
@@ -33,7 +33,7 @@ extension NetworkError: LocalizedError {
         case .unAuthorizedError:
             return "🚪접근 권한이 없습니다 (토큰 만료)"
         case .clientError(let code, let message):
-            return "📱클라이언트 에러 code: \(code), message:\(message)"
+            return "📱클라이언트 에러 code: \(code ?? "nil"), message:\(message ?? "nil")"
         case .serverError:
             return "🖥️서버 에러"
         case .kakaoError:
